@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 
 class CustomTextFormField extends StatelessWidget {
   final String label;
@@ -13,6 +12,8 @@ class CustomTextFormField extends StatelessWidget {
   final Widget? suffixIcon;
   final bool obscureText;
   final Widget? prefixIcon;
+  final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
 
   const CustomTextFormField({
     super.key,
@@ -25,6 +26,8 @@ class CustomTextFormField extends StatelessWidget {
     this.suffixIcon,
     this.obscureText = false,
     this.prefixIcon,
+    this.validator,
+    this.keyboardType,
   });
 
   @override
@@ -35,6 +38,7 @@ class CustomTextFormField extends StatelessWidget {
       onTap: onTap,
       controller: controller,
       obscureText: obscureText,
+      keyboardType: keyboardType ?? TextInputType.text,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -75,10 +79,7 @@ class CustomTextFormField extends StatelessWidget {
           ),
         ),
       ),
-      validator: FormBuilderValidators.compose([
-        FormBuilderValidators.required(),
-        FormBuilderValidators.minLength(6),
-      ]),
+      validator: validator,
     );
   }
 }

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../global/global.dart';
+import '../../../models/models.dart';
+import '../home.dart';
+
 class HomePage extends StatefulWidget {
   static Route<dynamic> route() {
     return MaterialPageRoute(builder: (_) => const HomePage());
@@ -13,7 +17,30 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // selected
+  String walletAmount = '00.00';
+  final amountController = TextEditingController();
+  final HomeRepository homeRepository = HomeRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    getWalletAmount();
+  }
+
+  @override
+  void dispose() {
+    amountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> getWalletAmount() async {
+    final UserModel? user = await homeRepository.loggedInUser;
+    if (user != null) {
+      setState(() {
+        walletAmount = user.walletAmount;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,11 +55,53 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               const WishUser(),
               10.verticalSpace,
-              const SideCard(
-                title: 'Available Balance',
-                subtitle: '\$1000.00',
-                icon: Icons.account_balance_wallet_rounded,
-                sideBool: true,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SideCard(
+                    title: 'Available Balance',
+                    subtitle: '\$$walletAmount',
+                    icon: Icons.account_balance_wallet_rounded,
+                    sideBool: true,
+                  ),
+                  SideCard(
+                    title: 'Add',
+                    subtitle: 'Add to wallet',
+                    icon: Icons.add_rounded,
+                    sideBool: false,
+                    onPressed: () {
+                      ShowCustomBottomSheet().addAmountToWallet(
+                          context: context,
+                          amountController: amountController,
+                          onPressed: () {
+                            HomeRepository()
+                                .addAmountToWallet(
+                              amount: amountController.text,
+                            )
+                                .then((value) {
+                              Navigator.pop(context);
+                              setState(() {
+                                getWalletAmount();
+                              });
+                            }).catchError((error) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(error.toString()),
+                                ),
+                              );
+                            }).onError((error, stackTrace) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(error.toString()),
+                                ),
+                              );
+                            }).whenComplete(() {
+                              amountController.clear();
+                            });
+                          });
+                    },
+                  ),
+                ],
               ),
               10.verticalSpace,
               const SideCard(
@@ -165,6 +234,70 @@ class ShowCustomBottomSheet {
       'icon': Icons.money_rounded,
     },
   ];
+
+  void addAmountToWallet(
+      {required BuildContext context,
+      required TextEditingController amountController,
+      required void Function() onPressed}) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.sp),
+          height: MediaQuery.of(context).viewInsets.bottom + 200.sp,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(8.sp),
+              topRight: Radius.circular(8.sp),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              10.verticalSpace,
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  height: 5.sp,
+                  width: 50.sp,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary,
+                    borderRadius: BorderRadius.circular(10.sp),
+                  ),
+                ),
+              ),
+              10.verticalSpace,
+              Text(
+                'Add Amount to Wallet',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+              10.verticalSpace,
+              CustomTextFormField(
+                label: 'Amount',
+                hint: 'Enter amount',
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                icon: Icons.account_balance_wallet_rounded,
+                onChanged: (value) {},
+              ),
+              10.verticalSpace,
+              PrimaryButton(
+                text: 'Add Amount',
+                onPressed: onPressed,
+              ),
+              20.verticalSpace,
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   void showCustomBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -415,7 +548,7 @@ String formatDate(DateTime date) {
     'Saturday',
   ];
   formattedDate =
-      '${days[date.weekday - 1]} ${date.day} ${months[date.month - 1]}, ${date.year}';
+      '${days[date.weekday]} ${date.day} ${months[date.month - 1]}, ${date.year}';
   return formattedDate;
 }
 
