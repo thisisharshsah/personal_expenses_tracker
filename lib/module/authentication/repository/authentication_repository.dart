@@ -15,6 +15,8 @@ class AuthenticationRepository {
         name: userData.get('name'),
         email: user.email!,
         walletAmount: userData.get('walletAmount'),
+        primaryVariables: userData.get('primaryVariables')?.cast<String>(),
+        secondaryVariables: userData.get('secondaryVariables')?.cast<String>(),
       );
     }
     return null;
@@ -44,6 +46,8 @@ class AuthenticationRepository {
       'name': name,
       'email': email,
       'walletAmount': '0',
+      'primaryVariables': [],
+      'secondaryVariables': [],
     });
   }
 
